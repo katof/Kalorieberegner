@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lille kalorieberegner – Pesto, Serrano, Babyspinat, Mozzarella, REMA1000 Focaccia</title>
+  <style>
+    :root {
+      --bg:#f7f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#16a34a;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+    h1{font-size:1.4rem;margin:0 0 8px}
+    p.lead{color:var(--muted);margin:0 0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+    th{font-weight:600;text-align:left}
+    input[type="number"]{width:100%;padding:8px;border:1px solid var(--line);border-radius:10px;font:inherit}
+    input[type="checkbox"]{transform:scale(1.1)}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}
+    .total{font-size:1.1rem}
+    .total strong{color:var(--accent)}
+    .muted{color:var(--muted);font-size:.9rem}
+    .row-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-block;background:#eef2ff;border:1px solid #dbeafe;color:#334155;padding:4px 8px;border-radius:999px;font-size:.85rem}
+    .foot{margin-top:8px;color:var(--muted);font-size:.85rem}
+    .smallbtn{padding:8px 10px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer}
+    .smallbtn:hover{border-color:#cbd5e1}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Lille kalorieberegner</h1>
+    <p class="lead">Juster gram og kcal/100 g for hver ingrediens. Slå ingredienser til/fra. Sæt antal portioner for at se kcal pr. portion.</p>
+
+    <div class="grid">
+      <div class="card" role="region" aria-label="Ingrediensliste og inputs">
+        <table aria-describedby="tbl-help">
+          <thead>
+            <tr>
+              <th>Med?</th>
+              <th>Ingrediens</th>
+              <th style="width:120px">Gram</th>
+              <th style="width:140px">kcal / 100 g</th>
+              <th style="width:120px">kcal</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <!-- rows injected by JS -->
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" class="muted" id="tbl-help">Tip: værdier er estimater – ret dem gerne efter jeres pakker/etiketter.</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="card" role="region" aria-label="Resultater">
+        <div class="row-actions" style="justify-content:space-between;margin-bottom:8px">
+          <div>
+            <label for="servings"><strong>Antal portioner</strong></label>
+            <input type="number" id="servings" min="1" value="2" aria-label="Antal portioner" />
+          </div>
+          <button class="smallbtn" id="resetBtn" type="button">Nulstil til standard</button>
+        </div>
+
+        <div class="total" id="totals" style="margin:8px 0 6px"></div>
+        <div class="muted" id="perIng"></div>
+
+        <div style="margin-top:12px">
+          <span class="pill">Synkront: brug live mens I laver mad</span>
+          <span class="pill">Asynkront: del tal i bloggen</span>
+        </div>
+
+        <p class="foot">Bemærk: Dette er vejledende tal (pakker varierer). Brug etiketten for mest præcis værdi.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Standard kcal/100 g (kan justeres i UI)
+    // Kilder varierer; disse er almindelige estimater:
+    // Pesto ~ 480-520; Serrano ~ 230-260; Babyspinat ~ 20-25; Mozzarella (frisk) ~ 260-300; Focaccia ~ 270-320
+    const DEFAULTS = [
+      { key:'pesto',     name:'Pesto',                 grams: 30,  kcal100: 500, enabled:true },
+      { key:'serrano',   name:'Serrano skinke',        grams: 30,  kcal100: 245, enabled:true },
+      { key:'spinat',    name:'Babyspinat',            grams: 40,  kcal100: 23,  enabled:true },
+      { key:'mozz',      name:'Mozzarella',            grams: 100, kcal100: 280, enabled:true },
+      { key:'focaccia',  name:'REMA1000 focaccia brød',grams: 120, kcal100: 300, enabled:true }
+    ];
+
+    const state = JSON.parse(localStorage.getItem('mini_kcal_state') || 'null') || {
+      items: DEFAULTS,
+      servings: 2
+    };
+
+    const tbody = document.getElementById('tbody');
+    const totalsEl = document.getElementById('totals');
+    const perIngEl = document.getElementById('perIng');
+    const servingsEl = document.getElementById('servings');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function rowTemplate(item, idx){
+      const idBase = item.key;
+      return `
+        <tr data-key="${item.key}">
+          <td><input type="checkbox" id="chk_${idBase}" ${item.enabled ? 'checked':''} aria-label="Medtag ${item.name}"></td>
+          <td><label for="g_${idBase}">${item.name}</label></td>
+          <td><input type="number" id="g_${idBase}" min="0" step="1" value="${item.grams}" aria-label="Gram for ${item.name}"></td>
+          <td><input type="number" id="k_${idBase}" min="0" step="1" value="${item.kcal100}" aria-label="kcal per 100 g for ${item.name}"></td>
+          <td id="c_${idBase}" aria-live="polite">0</td>
+        </tr>
+      `;
+    }
+
+    function render(){
+      tbody.innerHTML = state.items.map(rowTemplate).join('');
+      servingsEl.value = state.servings;
+      bind();
+      compute();
+    }
+
+    function bind(){
+      state.items.forEach(it=>{
+        const chk = document.getElementById('chk_'+it.key);
+        const g   = document.getElementById('g_'+it.key);
+        const k   = document.getElementById('k_'+it.key);
+
+        chk.addEventListener('change', ()=>{ it.enabled = chk.checked; persist(); compute(); });
+        g.addEventListener('input',   ()=>{ it.grams   = +g.value||0;   persist(); compute(); });
+        k.addEventListener('input',   ()=>{ it.kcal100 = +k.value||0;   persist(); compute(); });
+      });
+
+      servingsEl.addEventListener('input', ()=>{
+        const v = Math.max(1, Math.round(+servingsEl.value||1));
+        state.servings = v; servingsEl.value = v; persist(); compute();
+      });
+
+      resetBtn.addEventListener('click', ()=>{
+        state.items = JSON.parse(JSON.stringify(DEFAULTS));
+        state.servings = 2;
+        persist(); render();
+      });
+    }
+
+    function compute(){
+      let total = 0;
+      let lines = [];
+      state.items.forEach(it=>{
+        const cell = document.getElementById('c_'+it.key);
+        let kcal = 0;
+        if (it.enabled){
+          kcal = (it.grams * it.kcal100) / 100;
+          total += kcal;
+        }
+        if(cell) cell.textContent = Math.round(kcal);
+        if (it.enabled){
+          lines.push(`${it.name}: ${Math.round(kcal)} kcal`);
+        }
+      });
+
+      const per = Math.round(total / Math.max(1, state.servings));
+      totalsEl.innerHTML = `
+        <div><strong>Total:</strong> <strong>${Math.round(total)} kcal</strong></div>
+        <div><strong>Pr. portion (${state.servings}):</strong> <strong>${per} kcal</strong></div>
+      `;
+      perIngEl.textContent = lines.join(' · ');
+    }
+
+    function persist(){
+      localStorage.setItem('mini_kcal_state', JSON.stringify(state));
+    }
+
+    render();
+  </script>
+</body>
+</html>
