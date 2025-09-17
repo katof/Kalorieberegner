@@ -3,40 +3,161 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Lille kalorieberegner – Pesto, Serrano, Babyspinat, Mozzarella, REMA1000 Focaccia</title>
+  <title>Lille kalorieberegner – Sandwich over Zoom</title>
+
   <style>
-    :root {
-      --bg:#f7f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#16a34a;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
-    h1{font-size:1.4rem;margin:0 0 8px}
-    p.lead{color:var(--muted);margin:0 0 16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
-    th{font-weight:600;text-align:left}
-    input[type="number"]{width:100%;padding:8px;border:1px solid var(--line);border-radius:10px;font:inherit}
-    input[type="checkbox"]{transform:scale(1.1)}
-    .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
-    @media (max-width:860px){.grid{grid-template-columns:1fr}}
-    .total{font-size:1.1rem}
-    .total strong{color:var(--accent)}
-    .muted{color:var(--muted);font-size:.9rem}
-    .row-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .pill{display:inline-block;background:#eef2ff;border:1px solid #dbeafe;color:#334155;padding:4px 8px;border-radius:999px;font-size:.85rem}
-    .foot{margin-top:8px;color:var(--muted);font-size:.85rem}
-    .smallbtn{padding:8px 10px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer}
-    .smallbtn:hover{border-color:#cbd5e1}
+  :root{
+    /* LEGO-inspirerede farver (kun til små splashes) */
+    --lego-yellow:#ffcf00;
+    --lego-turq:#00cfcf;
+    --lego-purple:#b066ff;
+    --lego-green:#8eff6c;
+    --lego-red:#ff7b7b;
+
+    /* Mørkt tema */
+    --bg:#101214;
+    --card:#16191d;
+    --text:#e5e7eb;
+    --muted:#9aa6b2;
+    --line:#22272e;
+
+    /* UI-accenter */
+    --ring:#2dd4bf;  /* fokusramme */
+    --shadow-lg:0 12px 30px rgba(0,0,0,.45);
+    --shadow-hover:0 16px 40px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box}
+  html{font-size:16px}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:16px/1.55 "IBM Plex Mono","JetBrains Mono","SFMono-Regular",Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    -webkit-text-size-adjust:100%;
+  }
+
+  /* Tynd farvestribe for subtil splash */
+  .top-splash{
+    height:3px;
+    background:linear-gradient(90deg,var(--lego-yellow),var(--lego-turq),var(--lego-green),var(--lego-purple),var(--lego-red));
+    opacity:.9;filter:saturate(.9);
+  }
+
+  .wrap{max-width:900px;margin:26px auto;padding:0 16px}
+
+  /* Nøgtern overskrift i mono */
+  h1{
+    font-weight:600;
+    font-size:1.35rem;
+    letter-spacing:.3px;
+    margin:0 0 10px;
+  }
+  p.lead{color:var(--muted);margin:0 0 18px}
+
+  /* Kort med små farve-“blobs” i hjørnerne */
+  .card{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:var(--shadow-lg);
+    overflow:hidden;
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .card:hover{box-shadow:var(--shadow-hover); transform:translateY(-2px)}
+  .card::before,.card::after{
+    content:"";
+    position:absolute;
+    width:14px;height:14px;border-radius:50%;
+    filter:blur(10px) saturate(1.05);
+    opacity:.55;pointer-events:none;
+  }
+  .card::before{top:-4px;left:-4px;background:var(--lego-yellow)}
+  .card::after{bottom:-6px;right:-6px;background:var(--lego-turq)}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+
+  /* Tabel og inputs */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-weight:600;text-align:left;color:#cbd5e1}
+  input[type="number"]{
+    width:100%;padding:8px 10px;background:#0f1317;color:var(--text);
+    border:1px solid var(--line);border-radius:10px;font:inherit;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+  }
+  input[type="number"]:focus{outline:2px solid var(--ring);border-color:var(--ring)}
+  input[type="checkbox"]{transform:scale(1.1)}
+
+  /* Gør tabellen scrollbar på små skærme */
+  .card table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .card thead,.card tbody,.card tfoot{display:table;width:100%}
+
+  /* Handling/totaler */
+  .row-actions{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:6px}
+  .row-actions label{font-weight:600}
+  .total{font-size:1.05rem;margin:10px 0}
+  .total strong{font-weight:700}
+  .muted{color:var(--muted);font-size:.92rem}
+
+  .smallbtn{
+    padding:9px 12px;border:1px solid var(--line);background:#0f1317;color:var(--text);
+    border-radius:10px;cursor:pointer;font-weight:600;
+    transition:box-shadow .15s ease,transform .12s ease,border-color .15s ease;
+  }
+  .smallbtn:hover{
+    border-color:#2a3139;transform:translateY(-1px);
+    box-shadow:0 8px 20px rgba(0,0,0,.45),0 0 0 3px rgba(0,207,207,.15);
+  }
+
+  .foot{margin-top:10px;color:var(--muted);font-size:.85rem;text-align:center}
+
+  /* Projekt-pills – neutrale i teksten, farvet glød/ramme som splash */
+  .tag-row{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+  .pill{
+    --pill-col: var(--lego-yellow);
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    background:#1a1d21;
+    color:var(--text);
+    border:1px solid rgba(255,255,255,.06);
+    box-shadow:
+      0 0 0 2px rgba(255,255,255,.02) inset,
+      0 0 0 2px var(--pill-col);
+    filter:saturate(.95);
+    font-size:.85rem;font-weight:600;
+  }
+  .pill.turq{--pill-col:var(--lego-turq)}
+  .pill.purple{--pill-col:var(--lego-purple)}
+  .pill.green{--pill-col:var(--lego-green)}
+  .pill.red{--pill-col:var(--lego-red)}
+
+  /* Ekstra små telefoner */
+  @media (max-width:500px){
+    html{font-size:15px}
+    .card{padding:16px}
+    th,td{padding:8px}
+    input[type="number"]{padding:6px 8px}
+    .smallbtn{padding:8px 10px}
+  }
   </style>
 </head>
 <body>
+  <div class="top-splash" aria-hidden="true"></div>
+
   <div class="wrap">
     <h1>Lille kalorieberegner</h1>
     <p class="lead">Juster gram og kcal/100 g for hver ingrediens. Slå ingredienser til/fra. Sæt antal portioner for at se kcal pr. portion.</p>
 
     <div class="grid">
+      <!-- Ingredienser -->
       <div class="card" role="region" aria-label="Ingrediensliste og inputs">
         <table aria-describedby="tbl-help">
           <thead>
@@ -48,32 +169,33 @@
               <th style="width:120px">kcal</th>
             </tr>
           </thead>
-          <tbody id="tbody">
-            <!-- rows injected by JS -->
-          </tbody>
+          <tbody id="tbody"><!-- rækker injiceres af JS --></tbody>
           <tfoot>
-            <tr>
-              <td colspan="5" class="muted" id="tbl-help">Tip: værdier er estimater – ret dem gerne efter jeres pakker/etiketter.</td>
-            </tr>
+            <tr><td colspan="5" class="muted" id="tbl-help">Tip: værdier er estimater – ret dem gerne efter jeres pakker/etiketter.</td></tr>
           </tfoot>
         </table>
       </div>
 
+      <!-- Resultater -->
       <div class="card" role="region" aria-label="Resultater">
-        <div class="row-actions" style="justify-content:space-between;margin-bottom:8px">
+        <div class="row-actions">
           <div>
-            <label for="servings"><strong>Antal portioner</strong></label>
-            <input type="number" id="servings" min="1" value="2" aria-label="Antal portioner" />
+            <label for="servings">Antal portioner</label>
+            <input type="number" id="servings" min="1" value="2" aria-label="Antal portioner">
           </div>
           <button class="smallbtn" id="resetBtn" type="button">Nulstil til standard</button>
         </div>
 
-        <div class="total" id="totals" style="margin:8px 0 6px"></div>
+        <div class="total" id="totals"></div>
         <div class="muted" id="perIng"></div>
 
-        <div style="margin-top:12px">
-          <span class="pill">Synkront: brug live mens I laver mad</span>
-          <span class="pill">Asynkront: del tal i bloggen</span>
+        <!-- Projekt-pills: ord fra jeres tekst -->
+        <div class="tag-row">
+          <span class="pill">Glokalt fællesskab</span>
+          <span class="pill turq">Samtidig &amp; forskudt</span>
+          <span class="pill purple">Opskrift &amp; improvisation</span>
+          <span class="pill green">Fejl = læring</span>
+          <span class="pill red">Having · Doing · Being · Knowing</span>
         </div>
 
         <p class="foot">Bemærk: Dette er vejledende tal (pakker varierer). Brug etiketten for mest præcis værdi.</p>
@@ -83,14 +205,12 @@
 
   <script>
     // Standard kcal/100 g (kan justeres i UI)
-    // Kilder varierer; disse er almindelige estimater:
-    // Pesto ~ 480-520; Serrano ~ 230-260; Babyspinat ~ 20-25; Mozzarella (frisk) ~ 260-300; Focaccia ~ 270-320
     const DEFAULTS = [
-      { key:'pesto',     name:'Pesto',                 grams: 30,  kcal100: 500, enabled:true },
-      { key:'serrano',   name:'Serrano skinke',        grams: 30,  kcal100: 245, enabled:true },
-      { key:'spinat',    name:'Babyspinat',            grams: 40,  kcal100: 23,  enabled:true },
-      { key:'mozz',      name:'Mozzarella',            grams: 100, kcal100: 280, enabled:true },
-      { key:'focaccia',  name:'REMA1000 focaccia brød',grams: 120, kcal100: 300, enabled:true }
+      { key:'pesto',     name:'Pesto',                  grams: 30,  kcal100: 500, enabled:true },
+      { key:'serrano',   name:'Serrano skinke',         grams: 30,  kcal100: 245, enabled:true },
+      { key:'spinat',    name:'Babyspinat',             grams: 40,  kcal100: 23,  enabled:true },
+      { key:'mozz',      name:'Mozzarella',             grams: 100, kcal100: 280, enabled:true },
+      { key:'focaccia',  name:'REMA1000 focaccia brød', grams: 120, kcal100: 300, enabled:true }
     ];
 
     const state = JSON.parse(localStorage.getItem('mini_kcal_state') || 'null') || {
@@ -104,7 +224,7 @@
     const servingsEl = document.getElementById('servings');
     const resetBtn = document.getElementById('resetBtn');
 
-    function rowTemplate(item, idx){
+    function rowTemplate(item){
       const idBase = item.key;
       return `
         <tr data-key="${item.key}">
@@ -179,4 +299,3 @@
   </script>
 </body>
 </html>
-
